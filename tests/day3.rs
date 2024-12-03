@@ -12,7 +12,7 @@ mod test {
             M,
             U,
             L,
-            LeftPara,
+            LeftParen,
             Num1(String),
             Comma(u32),
             Num2(u32, String),
@@ -43,15 +43,15 @@ mod test {
                     (State::Init, 'm') => State::M,
                     (State::M, 'u') => State::U,
                     (State::U, 'l') => State::L,
-                    (State::L, '(') => State::LeftPara,
-                    (State::LeftPara, c @ '0'..='9') => State::Num1(String::from(c)),
-                    (State::Num1(mut s), c @ '0'..='9') if s.len() < 3 => {
+                    (State::L, '(') => State::LeftParen,
+                    (State::LeftParen, '0'..='9') => State::Num1(String::from(c)),
+                    (State::Num1(mut s), '0'..='9') if s.len() < 3 => {
                         s.push(c);
                         State::Num1(s)
                     }
                     (State::Num1(s), ',') => State::Comma(s.parse().unwrap()),
-                    (State::Comma(num1), c @ '0'..='9') => State::Num2(num1, String::from(c)),
-                    (State::Num2(num1, mut s), c @ '0'..='9') if s.len() < 3 => {
+                    (State::Comma(num1), '0'..='9') => State::Num2(num1, String::from(c)),
+                    (State::Num2(num1, mut s), '0'..='9') if s.len() < 3 => {
                         s.push(c);
                         State::Num2(num1, s)
                     }
