@@ -42,7 +42,7 @@ mod test {
                 }
             }
             state = match (state, c) {
-                (State::Init, b'm') => State::M,
+                (_, b'm') => State::M,
                 (State::M, b'u') => State::U,
                 (State::U, b'l') => State::L,
                 (State::L, b'(') => State::LeftParen,
@@ -65,7 +65,7 @@ mod test {
                     State::Init
                 }
                 _ => State::Init,
-            }
+            };
         }
 
         result
