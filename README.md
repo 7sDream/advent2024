@@ -4,6 +4,7 @@
 
 - I do it using Rust.
 - No dependencies except the standard library.
+- Good performance if I can.
 - Do not promise I will finish all problems.
 - Just for fun.
 
