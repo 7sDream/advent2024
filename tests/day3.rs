@@ -2,8 +2,8 @@
 mod test {
     use advent2024::*;
 
-    fn data() -> impl Iterator<Item = String> {
-        read_by_line("tests/data/day3.input.txt")
+    fn data() -> impl Iterator<Item = u8> {
+        read_by_byte("tests/data/day3.input.txt")
     }
 
     fn parse(switch: bool) -> u32 {
@@ -21,49 +21,50 @@ mod test {
         let mut result = 0;
         let mut enable = true;
         let mut queue = std::collections::VecDeque::with_capacity(8);
-        for line in data() {
-            let mut state = State::Init;
-            for c in line.chars() {
-                if switch {
-                    while queue.len() >= 7 {
-                        queue.pop_front();
+        let mut state = State::Init;
+        for c in data() {
+            if switch {
+                while queue.len() >= 7 {
+                    queue.pop_front();
+                }
+                queue.push_back(c);
+                if c == b')' {
+                    let s = queue.make_contiguous();
+                    if matches!(s.last_chunk(), Some([b'd', b'o', b'(', b')'])) {
+                        enable = true;
                     }
-                    queue.push_back(c);
-                    if c == ')' {
-                        let s = queue.make_contiguous();
-                        if matches!(s.last_chunk(), Some(['d', 'o', '(', ')'])) {
-                            enable = true;
-                        }
-                        if matches!(s.last_chunk(), Some(['d', 'o', 'n', '\'', 't', '(', ')'])) {
-                            enable = false;
-                        }
+                    if matches!(
+                        s.last_chunk(),
+                        Some([b'd', b'o', b'n', b'\'', b't', b'(', b')'])
+                    ) {
+                        enable = false;
                     }
                 }
-                state = match (state, c) {
-                    (State::Init, 'm') => State::M,
-                    (State::M, 'u') => State::U,
-                    (State::U, 'l') => State::L,
-                    (State::L, '(') => State::LeftParen,
-                    (State::LeftParen, '0'..='9') => State::Num1(String::from(c)),
-                    (State::Num1(mut s), '0'..='9') if s.len() < 3 => {
-                        s.push(c);
-                        State::Num1(s)
-                    }
-                    (State::Num1(s), ',') => State::Comma(s.parse().unwrap()),
-                    (State::Comma(num1), '0'..='9') => State::Num2(num1, String::from(c)),
-                    (State::Num2(num1, mut s), '0'..='9') if s.len() < 3 => {
-                        s.push(c);
-                        State::Num2(num1, s)
-                    }
-                    (State::Num2(num1, s), ')') => {
-                        let num2: u32 = s.parse().unwrap();
-                        if enable {
-                            result += num1 * num2;
-                        }
-                        State::Init
-                    }
-                    _ => State::Init,
+            }
+            state = match (state, c) {
+                (State::Init, b'm') => State::M,
+                (State::M, b'u') => State::U,
+                (State::U, b'l') => State::L,
+                (State::L, b'(') => State::LeftParen,
+                (State::LeftParen, b'0'..=b'9') => State::Num1(String::from(c as char)),
+                (State::Num1(mut s), b'0'..=b'9') if s.len() < 3 => {
+                    s.push(c as char);
+                    State::Num1(s)
                 }
+                (State::Num1(s), b',') => State::Comma(s.parse().unwrap()),
+                (State::Comma(num1), b'0'..=b'9') => State::Num2(num1, String::from(c as char)),
+                (State::Num2(num1, mut s), b'0'..=b'9') if s.len() < 3 => {
+                    s.push(c as char);
+                    State::Num2(num1, s)
+                }
+                (State::Num2(num1, s), b')') => {
+                    let num2: u32 = s.parse().unwrap();
+                    if enable {
+                        result += num1 * num2;
+                    }
+                    State::Init
+                }
+                _ => State::Init,
             }
         }
 
