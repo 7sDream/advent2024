@@ -20,7 +20,7 @@ mod test {
 
         let mut result = 0;
         let mut enable = true;
-        let mut queue = std::collections::VecDeque::with_capacity(1024);
+        let mut queue = std::collections::VecDeque::with_capacity(8);
         for line in data() {
             let mut state = State::Init;
             for c in line.chars() {
