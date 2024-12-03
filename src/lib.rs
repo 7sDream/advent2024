@@ -9,6 +9,13 @@ fn open(filename: &str) -> impl BufRead {
     std::io::BufReader::new(f)
 }
 
+pub fn read_all(filename: &str) -> Vec<u8> {
+    let mut buffer = open(filename);
+    let mut buf = Vec::with_capacity(1024);
+    buffer.read_to_end(&mut buf).unwrap();
+    buf
+}
+
 pub fn read_by_line(filename: &str) -> impl Iterator<Item = String> {
     let mut buffer = open(filename);
     std::iter::from_fn(move || {
