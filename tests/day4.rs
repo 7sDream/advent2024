@@ -8,8 +8,17 @@ mod test {
             .collect()
     }
 
+    /// Get an iterator that generates all position in the input, in format of (row, col)
+    fn pos(input: &[Vec<char>]) -> impl Iterator<Item = (usize, usize)> + '_ {
+        input
+            .iter()
+            .enumerate()
+            .flat_map(|(i, line)| line.iter().enumerate().map(move |(j, _)| (i, j)))
+    }
+
     #[test]
     fn part1() {
+        /// An iterator that walk from `index` position follow the `direction`
         struct Walker<'a> {
             input: &'a [Vec<char>],
             index: (isize, isize),
@@ -25,13 +34,13 @@ mod test {
                 }
             }
 
-            pub fn get4(&mut self) -> [Option<char>; 4] {
-                [self.next(), self.next(), self.next(), self.next()]
-            }
-
             pub fn direction(mut self, direction: (isize, isize)) -> Self {
                 self.direction = direction;
                 self
+            }
+
+            pub fn chars(&mut self) -> [Option<char>; 4] {
+                std::array::from_fn(|_| self.next())
             }
         }
 
@@ -64,19 +73,14 @@ mod test {
         fn check_position(input: &[Vec<char>], position: (usize, usize)) -> usize {
             [(0, 1), (1, 0), (1, 1), (1, -1)]
                 .into_iter()
-                .map(|dir| Walker::new(input, position).direction(dir).get4())
+                .map(|dir| Walker::new(input, position).direction(dir).chars())
                 .filter(check)
                 .count()
         }
 
         let input = data();
-
-        let result = (0..input.len())
-            .map(|line| {
-                (0..input[line].len())
-                    .map(|col| check_position(&input, (line, col)))
-                    .sum::<usize>()
-            })
+        let result = pos(&input)
+            .map(|pos| check_position(&input, pos))
             .sum::<usize>();
 
         assert_eq!(result, 2358);
@@ -100,13 +104,7 @@ mod test {
             }
 
             pub fn get5(&mut self) -> [Option<char>; 5] {
-                [
-                    self.next(),
-                    self.next(),
-                    self.next(),
-                    self.next(),
-                    self.next(),
-                ]
+                std::array::from_fn(|_| self.next())
             }
         }
 
@@ -149,14 +147,10 @@ mod test {
 
         let input = data();
 
-        let result = (0..input.len())
-            .map(|line| {
-                (0..input[line].len())
-                    .map(|col| CrossWalker::new(&input, (line, col)).get5())
-                    .filter(check)
-                    .count()
-            })
-            .sum::<usize>();
+        let result = pos(&input)
+            .map(|position| CrossWalker::new(&input, position).get5())
+            .filter(check)
+            .count();
 
         assert_eq!(result, 1737);
     }
