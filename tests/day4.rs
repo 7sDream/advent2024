@@ -103,7 +103,7 @@ mod test {
                 }
             }
 
-            pub fn get5(&mut self) -> [Option<char>; 5] {
+            pub fn chars(&mut self) -> [Option<char>; 5] {
                 std::array::from_fn(|_| self.next())
             }
         }
@@ -148,7 +148,7 @@ mod test {
         let input = data();
 
         let result = pos(&input)
-            .map(|position| CrossWalker::new(&input, position).get5())
+            .map(|position| CrossWalker::new(&input, position).chars())
             .filter(check)
             .count();
 
