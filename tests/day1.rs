@@ -26,8 +26,8 @@ mod test {
             l2.push(n2);
         });
 
-        l1.sort();
-        l2.sort();
+        l1.sort_unstable();
+        l2.sort_unstable();
 
         let result: u32 = l1.into_iter().zip(l2).map(|(n1, n2)| n1.abs_diff(n2)).sum();
 
