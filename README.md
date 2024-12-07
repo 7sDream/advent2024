@@ -10,7 +10,7 @@
 
 ## Run
 
-Put input in `tests/data/input.day1.txt`, and run
+Put input in `tests/data/day1.input.txt`, and run
 
 ```bash
 cargo test --test day1 --release 
