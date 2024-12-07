@@ -15,6 +15,7 @@ mod tests {
     }
 
     enum WalkStep {
+        #[allow(dead_code)]
         At(usize, usize),
         Out,
         Loop,
