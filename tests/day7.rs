@@ -96,6 +96,7 @@ mod tests {
     struct Join;
     impl Operator for Join {
         fn rollback<'a>(&self, result: i64, last: i64) -> Option<ControlFlow<(), i64>> {
+            // PERF: I know I can use some math there, but to_string is just more convenient...
             let rs = result.to_string();
             let ls = last.to_string();
             if rs.ends_with(&ls) {
