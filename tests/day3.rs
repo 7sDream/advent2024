@@ -2,82 +2,65 @@
 mod test {
     use advent2024::*;
 
-    fn data() -> impl Iterator<Item = u8> {
-        read_by_byte("tests/data/day3.input.txt")
+    fn data() -> Vec<u8> {
+        read_all("tests/data/day3.input.txt")
     }
 
-    fn parse(switch: bool) -> u32 {
-        enum State {
-            Init,
-            M,
-            U,
-            L,
-            LeftParen,
-            Num1(String),
-            Comma(u32),
-            Num2(u32, String),
+    #[derive(Debug, Clone)]
+    enum Command {
+        Mul(u32, u32),
+        Do,
+        Dont,
+    }
+
+    fn parse(s: &[u8]) -> impl Iterator<Item = Command> + '_ {
+        use winnow::{ascii::*, combinator::*, token::*, PResult, Parser};
+
+        fn mul(input: &mut &[u8]) -> PResult<Command> {
+            delimited(b"mul(", separated_pair(dec_uint, b",", dec_uint), b")")
+                .map(|(a, b)| Command::Mul(a, b))
+                .parse_next(input)
         }
 
-        let mut result = 0;
-        let mut enable = true;
-        let mut queue = std::collections::VecDeque::with_capacity(8);
-        let mut state = State::Init;
-        for c in data() {
-            if switch {
-                while queue.len() >= 7 {
-                    queue.pop_front();
-                }
-                queue.push_back(c);
-                if c == b')' {
-                    let s = queue.make_contiguous();
-                    if matches!(s.last_chunk(), Some([b'd', b'o', b'(', b')'])) {
-                        enable = true;
-                    }
-                    if matches!(
-                        s.last_chunk(),
-                        Some([b'd', b'o', b'n', b'\'', b't', b'(', b')'])
-                    ) {
-                        enable = false;
-                    }
-                }
-            }
-            state = match (state, c) {
-                (_, b'm') => State::M,
-                (State::M, b'u') => State::U,
-                (State::U, b'l') => State::L,
-                (State::L, b'(') => State::LeftParen,
-                (State::LeftParen, b'0'..=b'9') => State::Num1(String::from(c as char)),
-                (State::Num1(mut s), b'0'..=b'9') if s.len() < 3 => {
-                    s.push(c as char);
-                    State::Num1(s)
-                }
-                (State::Num1(s), b',') => State::Comma(s.parse().unwrap()),
-                (State::Comma(num1), b'0'..=b'9') => State::Num2(num1, String::from(c as char)),
-                (State::Num2(num1, mut s), b'0'..=b'9') if s.len() < 3 => {
-                    s.push(c as char);
-                    State::Num2(num1, s)
-                }
-                (State::Num2(num1, s), b')') => {
-                    let num2: u32 = s.parse().unwrap();
-                    if enable {
-                        result += num1 * num2;
-                    }
-                    State::Init
-                }
-                _ => State::Init,
-            };
+        fn command(input: &mut &[u8]) -> PResult<Option<Command>> {
+            alt((
+                b"do()".value(Some(Command::Do)),
+                b"don't()".value(Some(Command::Dont)),
+                mul.map(Some),
+                any.value(None),
+            ))
+            .parse_next(input)
         }
 
-        result
+        let mut it = iterator(s, command);
+        std::iter::from_fn(move || (&mut it).next()).flatten()
     }
 
     #[test]
     fn part1() {
-        assert_eq!(parse(false), 183380722);
+        let input = data();
+        let result: u32 = parse(&input)
+            .map(|cmd| match cmd {
+                Command::Mul(a, b) => a * b,
+                _ => 0,
+            })
+            .sum();
+
+        assert_eq!(result, 183380722);
     }
 
     #[test]
     fn part2() {
-        assert_eq!(parse(true), 82733683);
+        let input = data();
+        let result = parse(&input)
+            .fold((0u32, true), |(acc, enable), cmd| match (enable, cmd) {
+                (true, Command::Mul(a, b)) => (acc + a * b, enable),
+                (false, Command::Mul(_, _)) => (acc, enable),
+                (_, Command::Do) => (acc, true),
+                (_, Command::Dont) => (acc, false),
+            })
+            .0;
+
+        assert_eq!(result, 82733683);
     }
 }
