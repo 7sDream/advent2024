@@ -83,8 +83,12 @@ mod tests {
     struct Multiple;
     impl Operator for Multiple {
         fn rollback<'a>(&self, result: i64, last: i64) -> Option<ControlFlow<(), i64>> {
-            if last == 0 && result == 0 {
-                Some(ControlFlow::Break(()))
+            if last == 0 {
+                if result == 0 {
+                    Some(ControlFlow::Break(()))
+                } else {
+                    None
+                }
             } else if result % last == 0 {
                 Some(ControlFlow::Continue(result / last))
             } else {
