@@ -29,18 +29,9 @@ mod tests {
                 })
                 .collect();
 
-            let tops: Vec<_> = map
-                .iter()
-                .enumerate()
-                .flat_map(|(row, line)| {
-                    line.iter()
-                        .enumerate()
-                        .filter(|(_, tile)| tile.height == 9)
-                        .map(move |(col, _)| (row, col))
-                })
-                .collect();
-
             let mut this = Map(map);
+
+            let tops: Vec<_> = this.filter(|t| t.height == 9).map(|(pos, _)| pos).collect();
 
             tops.into_iter().for_each(|pos| {
                 this.update_score_rating(pos);
@@ -49,11 +40,20 @@ mod tests {
             this
         }
 
+        fn filter<F>(&self, mut pred: F) -> impl Iterator<Item = ((usize, usize), &Tile)>
+        where
+            F: FnMut(&Tile) -> bool + Copy,
+        {
+            self.0.iter().enumerate().flat_map(move |(row, line)| {
+                line.iter()
+                    .enumerate()
+                    .filter(move |(_, tile)| pred(tile))
+                    .map(move |(col, tile)| ((row, col), tile))
+            })
+        }
+
         pub fn trailheads(&self) -> impl Iterator<Item = &Tile> {
-            self.0
-                .iter()
-                .flat_map(|line| line.iter())
-                .filter(|x| x.height == 0)
+            self.filter(|t| t.height == 0).map(|(_, tile)| tile)
         }
 
         fn neighbors(&self, (row, col): (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
