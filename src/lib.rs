@@ -37,3 +37,23 @@ pub fn read_by_byte(filename: &str) -> impl Iterator<Item = u8> {
         Some(buf[0])
     })
 }
+
+pub fn neighbors((row, col): (usize, usize)) -> [Option<(usize, usize)>; 4] {
+    [
+        if col > 0 { Some((row, col - 1)) } else { None },
+        Some((row, col + 1)),
+        if row > 0 { Some((row - 1, col)) } else { None },
+        Some((row + 1, col)),
+    ]
+}
+
+pub fn neighbors_limited(
+    pos: (usize, usize),
+    limit: (usize, usize),
+) -> [Option<(usize, usize)>; 4] {
+    let mut result = neighbors(pos);
+    result.iter_mut().filter(|x| x.is_some()).for_each(|pos| {
+        pos.take_if(|(row, col)| *row >= limit.0 || *col >= limit.1);
+    });
+    result
+}

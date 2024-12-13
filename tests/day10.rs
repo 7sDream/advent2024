@@ -56,25 +56,6 @@ mod tests {
             self.filter(|t| t.height == 0).map(|(_, tile)| tile)
         }
 
-        fn neighbors(&self, (row, col): (usize, usize)) -> impl Iterator<Item = (usize, usize)> {
-            [
-                if col > 0 { Some((row, col - 1)) } else { None },
-                if col + 1 < self.0[row].len() {
-                    Some((row, col + 1))
-                } else {
-                    None
-                },
-                if row > 0 { Some((row - 1, col)) } else { None },
-                if row + 1 < self.0.len() {
-                    Some((row + 1, col))
-                } else {
-                    None
-                },
-            ]
-            .into_iter()
-            .flatten()
-        }
-
         fn update_score_rating(&mut self, pos: (usize, usize)) {
             let mut q = VecDeque::with_capacity(32);
             let mut s = HashMap::with_capacity(128);
@@ -83,7 +64,10 @@ mod tests {
             while let Some((pos, height)) = q.pop_front() {
                 let rating = *s.get(&pos).unwrap();
                 if height > 0 {
-                    for pos in self.neighbors(pos) {
+                    for pos in neighbors_limited(pos, (self.0.len(), self.0[0].len()))
+                        .into_iter()
+                        .flatten()
+                    {
                         let tile = self.0.get_mut(pos.0).unwrap().get_mut(pos.1).unwrap();
                         if tile.height + 1 == height {
                             let entry = s.entry(pos);
