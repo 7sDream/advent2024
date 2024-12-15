@@ -10,6 +10,31 @@ mod tests {
         Wall,
         BoxLeft,
         BoxRight,
+        Robot,
+    }
+
+    impl TryFrom<u8> for Tile {
+        type Error = ();
+
+        fn try_from(value: u8) -> Result<Self, Self::Error> {
+            match value {
+                b'.' => Ok(Tile::Empty),
+                b'#' => Ok(Tile::Wall),
+                b'O' => Ok(Tile::BoxLeft),
+                b'@' => Ok(Tile::Robot),
+                _ => Err(()),
+            }
+        }
+    }
+
+    impl Tile {
+        pub fn double(&self) -> [Self; 2] {
+            match self {
+                Self::Robot => [Self::Robot, Self::Empty],
+                Self::BoxLeft => [Self::BoxLeft, Self::BoxRight],
+                other => [*other, *other],
+            }
+        }
     }
 
     #[derive(Debug, Clone, Copy)]
@@ -18,6 +43,20 @@ mod tests {
         Right,
         Up,
         Down,
+    }
+
+    impl TryFrom<u8> for Direction {
+        type Error = ();
+
+        fn try_from(value: u8) -> Result<Self, Self::Error> {
+            match value {
+                b'<' => Ok(Direction::Left),
+                b'>' => Ok(Direction::Right),
+                b'^' => Ok(Direction::Up),
+                b'v' => Ok(Direction::Down),
+                _ => Err(()),
+            }
+        }
     }
 
     impl Direction {
@@ -52,6 +91,7 @@ mod tests {
                     (self.position.0 as isize + oy) as usize,
                     (self.position.1 as isize + ox) as usize,
                 );
+                map[self.position.0][self.position.1] = Tile::Robot;
 
                 Some(boxes.len())
             } else {
@@ -153,56 +193,36 @@ mod tests {
         let map: Vec<Vec<_>> = m
             .enumerate()
             .map(|(row, line)| {
-                line.trim_end()
-                    .as_bytes()
-                    .iter()
+                let tiles = line
+                    .into_bytes()
+                    .into_iter()
+                    .filter_map(|tile| tile.try_into().ok())
                     .enumerate()
-                    .flat_map(|(col, tile)| {
-                        let tile = match tile {
-                            b'.' => Tile::Empty,
-                            b'#' => Tile::Wall,
-                            b'O' => Tile::BoxLeft,
-                            b'@' => {
-                                robot = (row, col);
-                                Tile::Empty
-                            }
-                            _ => unreachable!(),
-                        };
-                        Some(tile).into_iter().chain(if double {
-                            Some(if matches!(tile, Tile::BoxLeft) {
-                                Tile::BoxRight
-                            } else {
-                                tile
-                            })
-                        } else {
-                            None
-                        })
-                    })
-                    .collect()
+                    .map(|(col, tile)| {
+                        if matches!(tile, Tile::Robot) {
+                            robot = (row, col);
+                        }
+                        tile
+                    });
+
+                if double {
+                    tiles.flat_map(|tile| tile.double()).collect()
+                } else {
+                    tiles.collect()
+                }
             })
             .collect();
 
         let warehouse = Warehouse {
             robot: Robot {
-                position: if double {
-                    (robot.0, robot.1 * 2)
-                } else {
-                    robot
-                },
+                position: (robot.0, robot.1 * if double { 2 } else { 1 }),
             },
             map,
         };
 
         let movements = lines
             .flat_map(|line| line.into_bytes())
-            .filter(|b| !matches!(b, b'\r' | b'\n'))
-            .map(|b| match b {
-                b'<' => Direction::Left,
-                b'>' => Direction::Right,
-                b'^' => Direction::Up,
-                b'v' => Direction::Down,
-                byte => unreachable!("unknown byte {}", byte),
-            });
+            .filter_map(|b| b.try_into().ok());
 
         (warehouse, movements)
     }
