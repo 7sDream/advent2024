@@ -109,8 +109,6 @@ mod tests {
             } else {
                 cpu.pc += 2
             }
-
-            println!("Execute {:?} {}, {:?}", self, operand, cpu);
         }
     }
 
@@ -195,13 +193,13 @@ mod tests {
     /// behavior, I analyzed it as:
     ///
     /// ```rust
-    /// let mut A = 0;
+    /// let mut A = 0;            // Some init value
     /// let mut B = 0;
     /// let mut C = 0;
     /// while A != 0 {
-    ///     B = A % 8;            // B1 = last 3 bit , X Y Z from A
+    ///     B = A % 8;            // B1 = last 3 bit of A
     ///     B = B ^ 3;            // B2 = B1 ^ 011
-    ///     C = A >> B;           // C  = B2 ~ B2 + 3 bit of A
+    ///     C = A >> B;           // C  = next 3 bit of A from position B2
     ///     B = B ^ C;            // B4 = B2 ^ C
     ///     B = B ^ 5;            // B5 = B4 ^ 101
     ///     print!("{}", B % 8);
@@ -226,7 +224,8 @@ mod tests {
     ///
     /// In each iteration, B ^ H ^ 110 = OUTPUT
     /// and B & H is all 3 bit number, which is 0..8.
-    /// So we can calculate all possible B and H 's output, and try put then back in A
+    /// So we can calculate all possible B and H 's output, and in each output, try
+    /// put B and H back in A.
     /// If we can finish all A's bit without any conflict, then we get the answer.
     /// ```
     #[test]
