@@ -14,7 +14,7 @@ mod tests {
         Corrupted,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     struct Memory {
         size: (usize, usize),
         tiles: Vec<Vec<Tile>>,
@@ -128,15 +128,21 @@ mod tests {
         assert_eq!(memory.path().unwrap().len() - 1, 260);
     }
 
-    // Not a very efficient way, but it works. And I'm tired today, so I won't optimize it anymore...
+    // Maybe not a very efficient way, but it works. And I'm tired today, so I won't optimize it anymore...
     #[test]
     fn part2() {
-        let (mut memory, mut falls) = data("tests/data/day18.input.txt", (71, 71));
-        let first_broken = falls.find(|pos| {
-            memory.byte_fall_at(*pos);
-            memory.path().is_none()
+        let (memory, falls) = data("tests/data/day18.input.txt", (71, 71));
+        let falls = falls.collect::<Vec<_>>();
+        let idx = (0..falls.len()).collect::<Vec<_>>();
+        let first_broken = idx.partition_point(|i| {
+            let mut m = memory.clone();
+            falls
+                .iter()
+                .take(*i + 1)
+                .for_each(|pos| m.byte_fall_at(*pos));
+            m.path().is_some()
         });
         // This is (y, x), but in website we need input it as x,y
-        assert_eq!(first_broken, Some((48, 24)));
+        assert_eq!(falls[first_broken], (48, 24));
     }
 }
