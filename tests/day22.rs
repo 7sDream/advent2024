@@ -84,22 +84,13 @@ mod tests {
     fn part2() {
         let mut result = HashMap::<VecDeque<i8>, usize>::new();
 
-        let m = data("tests/data/day22.input.txt")
+        data("tests/data/day22.input.txt")
             .map(bananas)
-            .collect::<Vec<_>>();
-
-        for record in &m {
-            for diff in record.keys() {
-                if let Entry::Vacant(entry) = result.entry(diff.clone()) {
-                    entry.insert(
-                        m.iter()
-                            .filter_map(|record| record.get(diff))
-                            .map(|price| *price as usize)
-                            .sum::<usize>(),
-                    );
+            .for_each(|record| {
+                for (diff, price) in record {
+                    *result.entry(diff).or_default() += price as usize;
                 }
-            }
-        }
+            });
 
         let max = result.values().max().copied().unwrap();
 
